@@ -11,13 +11,21 @@ abstract class CategoryDbFunctions {
 
 class CategoryDB implements CategoryDbFunctions {
 
-  ValueNotifier<List<CategoryModel>> incomeCategoryList = ValueNotifier([]);
-  ValueNotifier<List<CategoryModel>> expenseCategoryList = ValueNotifier([]);
+  CategoryDB._internal();
+
+  static CategoryDB instance = CategoryDB._internal();
+
+  factory CategoryDB() {
+    return instance;
+  }
+
+  ValueNotifier<List<CategoryModel>> incomeCategoryListListener = ValueNotifier([]);
+  ValueNotifier<List<CategoryModel>> expenseCategoryListListener = ValueNotifier([]);
 
   @override
   Future<void> insertCategory(CategoryModel value) async {
     final _categoryDB = await Hive.openBox<CategoryModel>(CATEGORY_DB_NAME);
-    await _categoryDB.add(value);
+    await _categoryDB.put(value.id, value);
     refreshUI();
   }
 
@@ -29,19 +37,26 @@ class CategoryDB implements CategoryDbFunctions {
 
   Future<void> refreshUI() async {
     final _allCategories = await getCategories();
-    incomeCategoryList.value.clear();
-    expenseCategoryList.value.clear();
+    incomeCategoryListListener.value.clear();
+    expenseCategoryListListener.value.clear();
 
     await Future.forEach(_allCategories, (CategoryModel category) {
       if(category.type == CategoryType.income) {
-        incomeCategoryList.value.add(category);
+        incomeCategoryListListener.value.add(category);
       }else {
-        expenseCategoryList.value.add(category);
+        expenseCategoryListListener.value.add(category);
       }
     });
 
-    incomeCategoryList.notifyListeners();
-    expenseCategoryList.notifyListeners();
+    incomeCategoryListListener.notifyListeners();
+    expenseCategoryListListener.notifyListeners();
+  }
+
+  @override
+  Future<void> deleteCategory(String categoryID) async {
+    final _categoryDB = await Hive.openBox<CategoryModel>(CATEGORY_DB_NAME);
+    await _categoryDB.delete(categoryID);
+    refreshUI();
   }
   
 

@@ -11,7 +11,7 @@ enum CategoryType {
 }
 
 @HiveType(typeId: 1)
-class CategoryModel {
+class CategoryModel extends HiveObject {
 
     @HiveField(0)
     final String id;
